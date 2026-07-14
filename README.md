@@ -2,16 +2,16 @@
 
 [![CI](https://github.com/eniomecaj/test-harness-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/eniomecaj/test-harness-cli/actions/workflows/ci.yml)
 
-A CLI tool that chews through board-level test logs and tells you what's actually
+A CLI tool that goes through board-level test logs and tells you what's actually
 going wrong. It reads pass/fail records, works out the pass rate, buckets the
 failures by type, and calls out which components are causing the most trouble.
 
 This is basically how a real test floor works. A station runs a fixed battery of
 tests on each board and logs a pass or fail with a reason. By the end of a shift
-you've got a pile of lines and someone has to turn that into an actual answer to
-"what is going wrong on the line." Test floor logs are never clean either, a station
+you've got a pile of lines and someone has to turn that into an actual answer to what is going wrong on the line. 
+Test floor logs are never clean either, a station
 resets mid write, a field goes missing, some operator script spits out a weird
-result string. So instead of dying on the first bad line, the tool just flags it and
+result string. So instead of stopping on the first bad line, the tool just flags it and
 keeps going.
 
 ## Log format
