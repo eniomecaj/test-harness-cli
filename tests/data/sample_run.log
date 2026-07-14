@@ -1,0 +1,24 @@
+# station: ICT-02  operator: jdoe  shift: A
+# format: timestamp | component_id | test_name | PASS/FAIL | reason (fail only)
+
+2026-07-14T09:00:01 | BRD-0001 | power_on_self_test | PASS
+2026-07-14T09:00:05 | BRD-0001 | i2c_bus_scan | FAIL | I2C bus error on addr 0x48
+2026-07-14T09:00:09 | BRD-0001 | rail_check | FAIL | 3v3 rail voltage out of range
+
+2026-07-14T09:01:02 | BRD-0002 | power_on_self_test | PASS
+2026-07-14T09:01:06 | BRD-0002 | rail_check | PASS
+2026-07-14T09:01:41 | BRD-0002 | thermal_soak | FAIL | Overheat at 92C
+
+2026-07-14T09:02:03 | BRD-0003 | power_on_self_test | PASS
+2026-07-14T09:02:08 | BRD-0003 | fw_verify | FAIL | Firmware checksum mismatch
+2026-07-14T09:02:12 | BRD-0003 | i2c_bus_scan | FAIL | No response from sensor
+2026-07-14T09:02:15 | BRD-0003 | rail_check | FAIL |
+
+2026-07-14T09:03:01 | BRD-0004 | power_on_self_test | PASS
+2026-07-14T09:03:44 | BRD-0004 | thermal_soak | PASS
+
+# Four deliberately broken lines follow. The tool must report them and keep going.
+2026-07-14T09:04:00 | BRD-0005 | rail_check
+this line is not a log line at all
+2026-07-14T09:05:00 | BRD-0005 | rail_check | MAYBE | inconclusive
+not-a-timestamp | BRD-0006 | fw_verify | FAIL | connector not seated
