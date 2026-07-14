@@ -2,15 +2,17 @@
 
 [![CI](https://github.com/eniomecaj/test-harness-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/eniomecaj/test-harness-cli/actions/workflows/ci.yml)
 
-A small command-line tool that reads board-level test logs, works out the pass rate,
-buckets the failures by type, and names the components that fail most often. It is
-modeled on production test/QA workflows: a station runs a fixed battery of tests
-against each board, appends a pass/fail record with a free-text failure reason, and
-somebody has to turn a shift's worth of those lines into an answer to "what is
-actually going wrong on the line?" Logs from a real test floor are messy — a station
-resets mid-write, a field is missing, an operator's script emits an unexpected
-result string — so the tool reports bad lines and keeps going rather than dying on
-the first one.
+A CLI tool that chews through board-level test logs and tells you what's actually
+going wrong. It reads pass/fail records, works out the pass rate, buckets the
+failures by type, and calls out which components are causing the most trouble.
+
+This is basically how a real test floor works. A station runs a fixed battery of
+tests on each board and logs a pass or fail with a reason. By the end of a shift
+you've got a pile of lines and someone has to turn that into an actual answer to
+"what is going wrong on the line." Test floor logs are never clean either, a station
+resets mid write, a field goes missing, some operator script spits out a weird
+result string. So instead of dying on the first bad line, the tool just flags it and
+keeps going.
 
 ## Log format
 
@@ -24,7 +26,7 @@ timestamp | component_id | test_name | PASS/FAIL | reason (fail only)
 2026-07-14T09:00:05 | BRD-0001 | i2c_bus_scan       | FAIL | I2C bus error on addr 0x48
 ```
 
-Failure reasons are bucketed by keyword into `power`, `thermal`, `communication`,
+Failure reasons get bucketed by keyword into `power`, `thermal`, `communication`,
 `timeout`, `firmware`, `mechanical`, `calibration`, or `uncategorized`
 (see [`categorize.py`](src/test_harness/categorize.py)).
 
@@ -35,10 +37,11 @@ Failure reasons are bucketed by keyword into `power`, `thermal`, `communication`
 ./scripts/run_pipeline.sh   # generate sample logs -> run the CLI -> write a report
 ```
 
-`run_pipeline.sh` is the "one command to see it work" script. It prints the summary to
-the console and writes `reports/summary.json`.
+`run_pipeline.sh` is the one-command version. Run it and it generates sample logs,
+runs the CLI, and prints the summary to the console while also writing
+`reports/summary.json`.
 
-To drive the CLI directly:
+Or drive the CLI yourself:
 
 ```bash
 source .venv/bin/activate                       # .venv/Scripts/activate on Windows
@@ -50,21 +53,23 @@ test-harness --input sample_logs/ --fail-under 95                  # exit 1 if p
 test-harness --help
 ```
 
-`--fail-under` is the piece that makes this usable as a gate: it exits non-zero when
-the pass rate drops below a threshold, so a CI job or a shift script can fail on it.
+`--fail-under` is the bit that actually makes this useful as a gate. It exits
+non-zero if the pass rate drops below whatever threshold you set, so a CI job or a
+shift script can fail loudly on it.
 
 Exit codes: `0` OK, `1` pass rate below `--fail-under`, `2` no usable input.
 
 ## Run it in Docker
 
-The image bakes in a small sample log, so it does something useful with no arguments:
+There's a small sample log baked into the image, so it does something useful even
+with no arguments:
 
 ```bash
 docker build -t test-harness .
 docker run --rm test-harness --input sample_logs/
 ```
 
-To report on logs from your own machine, mount them in:
+Got your own logs? Mount them in:
 
 ```bash
 docker run --rm -v "$(pwd)/sample_logs:/data" test-harness --input /data
@@ -78,20 +83,20 @@ pytest -v          # unit tests + one end-to-end pipeline test
 ruff check .       # lint
 ```
 
-The unit tests cover parsing and failure categorization. The integration test
-(`tests/test_pipeline_integration.py`) runs the CLI end to end over
-`tests/data/sample_run.log` and asserts the exported report is correct. That sample
-log deliberately contains four broken lines — a truncated record, a line that is not a
-log line at all, an invalid result value, and an unparseable timestamp — so the tests
-prove the tool reports bad input and still produces a correct report from the good
-lines.
+Unit tests cover parsing and failure categorization. The integration test
+(`tests/test_pipeline_integration.py`) runs the whole CLI over
+`tests/data/sample_run.log` and checks the exported report is correct. That sample
+log has four broken lines on purpose: a truncated record, a line that isn't a log
+line at all, a bogus result value, and a timestamp that won't parse. So the tests
+actually prove the tool survives bad input and still gets the good lines right.
 
 ## CI
 
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and pull
-request to `main`: check out, set up Python, install, lint with ruff, run pytest,
-smoke-test the pipeline script, then build the Docker image and run the CLI inside it
-to confirm the image is actually usable and not just buildable.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) fires on every push and pull
+request to `main`. Checks out the repo, sets up Python, installs everything, lints
+with ruff, runs pytest, smoke-tests the pipeline script, then builds the Docker
+image and actually runs the CLI inside it, because a build that just compiles isn't
+proof of much.
 
 ## Layout
 
